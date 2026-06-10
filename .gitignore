@@ -1,0 +1,23 @@
+CLAUDE.md
+nvim/lazy-lock.json
+
+# editor noise
+*.swp
+*.swo
+*~
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# secrets / local overrides
+*.local
+*.secret
+.env
+secrets/
+
+# compiled / cache
+__pycache__/
+*.pyc
+*.pyo
+.cache/

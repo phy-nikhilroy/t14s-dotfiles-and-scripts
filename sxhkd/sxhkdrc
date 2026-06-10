@@ -1,0 +1,122 @@
+# KEYBIND RULES 
+
+# reload key-binds
+super + Escape
+  pkill -USR1 -x sxhkd
+
+# quit bspwm
+super + alt + Escape
+  bspc quit
+
+# lock screen
+super + alt + l
+  i3lock -c 000000
+
+# APP LAUNCHERS
+
+# launch terminal
+super + Return 
+	alacritty
+
+# launch plain firefox
+super + b
+  firefox &
+
+# app launcher
+super + d
+  rofi -show drun
+
+# WINDOW RULES
+
+# kill window
+super + q
+  bspc node -c
+
+# toggle floating
+super + space
+  bspc node -t ~floating
+
+# toggle fullscreen
+super + f
+  bspc node -t ~fullscreen
+
+# toggle monocle layout
+super + m
+  bspc desktop -l next
+
+# move to window
+super + {h,j,k,l}
+	bspc node -f {west,south,north,east}
+
+# move to workspace left or right
+super + bracket{left,right}
+	bspc desktop -f {prev,next}.local
+
+# move to workspace numbered
+super + {1-9,0}
+	bspc desktop -f '^{1-9,10}'
+
+# move window to workspace numbered
+super + shift + {1-9,0}
+	bspc node -d '^{1-9,10}' --follow
+
+# change the position of focused window
+super + shift + {h,j,k,l}
+	bspc node -s {west,south,north,east}
+  
+# focus the last node/desktop
+super + {grave,Tab}
+	bspc {node,desktop} -f last
+
+# preselect the direction
+super + ctrl + {h,j,k,l}
+	bspc node -p {west,south,north,east}
+
+# preselect the ratio
+super + ctrl + {1-9}
+	bspc node -o 0.{1-9}
+
+# cancel the preselection for the focused node
+super + ctrl + space
+	bspc node -p cancel
+
+# resize windows
+super + alt + {Left,Down,Up,Right}
+	bspc node -z {left -20 0 || bspc node -z right -20 0, \
+		      bottom 0 20 || bspc node -z top 0 20, \
+		      top 0 -20 || bspc node -z bottom 0 -20, \
+		      right 20 0 || bspc node -z left 20 0}
+
+# VOLUME AND BRIGHTNESS SETTINGS
+
+# raise volume
+XF86AudioRaiseVolume
+	wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+
+
+# lower volume
+XF86AudioLowerVolume
+	wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+
+# mute audio
+XF86AudioMute
+	wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+
+# mute mic (ThinkPad dedicated button)
+XF86AudioMicMute
+	wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+
+# increase brightness
+XF86MonBrightnessUp
+	brightnessctl set +5%
+
+# decrease brightness
+XF86MonBrightnessDown
+	brightnessctl set 5%-
+
+# screenshot entire screen
+Print
+  flameshot full
+
+# screenshot an area of screen
+super + Print
+  flameshot gui

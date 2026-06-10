@@ -1,0 +1,199 @@
+#!/bin/bash
+
+# ── Colors ────────────────────────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+header() { echo -e "\n${BOLD}${BLUE}━━━  $1  ━━━${NC}"; }
+ok()     { echo -e "  ${GREEN}[OK]${NC}   $1"; }
+skip()   { echo -e "  ${YELLOW}[SKIP]${NC} $1"; }
+info()   { echo -e "  ${CYAN}[INFO]${NC} $1"; }
+warn()   { echo -e "  ${YELLOW}[WARN]${NC} $1"; }
+fail()   { echo -e "  ${RED}[FAIL]${NC} $1"; }
+ask()    { read -rp "  $(echo -e "${YELLOW}?${NC}") $1 [y/N] " _ans; [[ "$_ans" =~ ^[Yy]$ ]]; }
+
+# ── Dependency Check ──────────────────────────────────────────────────────────
+header "Dependency Check"
+
+MISSING=()
+command -v paccache  &>/dev/null || MISSING+=("pacman-contrib")
+command -v reflector &>/dev/null || MISSING+=("reflector")
+
+if [ ${#MISSING[@]} -gt 0 ]; then
+    warn "Missing optional packages: ${MISSING[*]}"
+    if ask "Install them now for full functionality?"; then
+        sudo pacman -S --noconfirm "${MISSING[@]}" \
+            && ok "Installed: ${MISSING[*]}" \
+            || fail "Could not install — some steps will be skipped"
+    else
+        warn "Skipping steps that need: ${MISSING[*]}"
+    fi
+else
+    ok "All dependencies present"
+fi
+
+# ── Disk Usage Before ─────────────────────────────────────────────────────────
+header "Disk Usage (before)"
+df -h /
+BEFORE_AVAIL=$(df / | awk 'NR==2{print $4}')
+
+# ── System Update ─────────────────────────────────────────────────────────────
+header "System Update"
+
+info "Running pacman -Syu ..."
+sudo pacman -Syu \
+    && ok "pacman: system packages up to date" \
+    || fail "pacman -Syu failed"
+
+if command -v yay &>/dev/null; then
+    info "Running yay -Syu (AUR packages) ..."
+    yay -Syu \
+        && ok "yay: AUR packages up to date" \
+        || fail "yay -Syu failed"
+elif command -v paru &>/dev/null; then
+    info "Running paru -Syu (AUR packages) ..."
+    paru -Syu \
+        && ok "paru: AUR packages up to date" \
+        || fail "paru -Syu failed"
+fi
+
+# ── Pacman Cache Cleanup ──────────────────────────────────────────────────────
+header "Pacman Cache Cleanup"
+
+CACHE_BEFORE=$(du -sh /var/cache/pacman/pkg/ 2>/dev/null | cut -f1)
+info "Cache size before: ${CACHE_BEFORE:-unknown}"
+
+if command -v paccache &>/dev/null; then
+    sudo paccache -r    && ok "paccache: kept last 3 versions per installed package"
+    sudo paccache -ruk0 && ok "paccache: removed cache of uninstalled packages"
+else
+    skip "paccache not available (pacman-contrib not installed)"
+    warn "Falling back to pacman -Sc (removes all but currently installed versions)"
+    if ask "Run pacman -Sc?"; then
+        sudo pacman -Sc \
+            && ok "pacman -Sc: old cache cleared" \
+            || fail "pacman -Sc failed"
+    fi
+fi
+
+CACHE_AFTER=$(du -sh /var/cache/pacman/pkg/ 2>/dev/null | cut -f1)
+info "Cache size after:  ${CACHE_AFTER:-unknown}"
+
+# ── Orphan Package Removal ────────────────────────────────────────────────────
+header "Orphan Package Removal"
+
+mapfile -t ORPHANS < <(pacman -Qtdq 2>/dev/null)
+
+if [ ${#ORPHANS[@]} -gt 0 ]; then
+    warn "${#ORPHANS[@]} orphaned package(s) found:"
+    printf '    %s\n' "${ORPHANS[@]}"
+    if ask "Remove all orphans with pacman -Rns?"; then
+        sudo pacman -Rns "${ORPHANS[@]}" \
+            && ok "Orphans removed" \
+            || fail "Failed to remove orphans"
+    else
+        skip "Orphan removal skipped"
+    fi
+else
+    ok "No orphaned packages"
+fi
+
+# ── Home Cache Cleanup ────────────────────────────────────────────────────────
+header "Home Cache Cleanup (~/.cache)"
+
+HOME_CACHE=$(du -sh ~/.cache 2>/dev/null | cut -f1)
+info "~/.cache size: ${HOME_CACHE:-empty}"
+
+if ask "Clear ~/.cache?"; then
+    rm -rf ~/.cache/* \
+        && ok "~/.cache cleared" \
+        || fail "Failed to clear ~/.cache"
+else
+    skip "Home cache cleanup skipped"
+fi
+
+# ── Systemd Journal Vacuum ────────────────────────────────────────────────────
+header "Systemd Journal Cleanup"
+
+JOURNAL_BEFORE=$(journalctl --disk-usage 2>/dev/null | grep -oP '[\d.]+ [A-Z]+' | head -1)
+info "Journal size before: ${JOURNAL_BEFORE:-unknown}"
+
+sudo journalctl --vacuum-time=7d   && ok "Removed journal entries older than 7 days"
+sudo journalctl --vacuum-size=100M && ok "Capped journal at 100 MB"
+
+JOURNAL_AFTER=$(journalctl --disk-usage 2>/dev/null | grep -oP '[\d.]+ [A-Z]+' | head -1)
+info "Journal size after:  ${JOURNAL_AFTER:-unknown}"
+
+# ── Mirror List Refresh ───────────────────────────────────────────────────────
+header "Mirror List Refresh"
+
+if command -v reflector &>/dev/null; then
+    info "Detecting country for mirror filtering ..."
+    COUNTRY=$(curl -sf --max-time 4 https://ipinfo.io/country 2>/dev/null | tr -d '[:space:]')
+
+    REFLECTOR_ARGS=(
+        --age 24
+        --protocol https
+        --sort rate
+        --latest 10
+        --download-timeout 3
+        --save /etc/pacman.d/mirrorlist
+    )
+
+    if [ -n "$COUNTRY" ]; then
+        info "Country detected: $COUNTRY — limiting mirrors to nearby servers"
+        REFLECTOR_ARGS+=(--country "$COUNTRY")
+    else
+        warn "Could not detect country — using worldwide mirrors (may be slow)"
+    fi
+
+    info "Updating mirrorlist ..."
+    if sudo reflector "${REFLECTOR_ARGS[@]}"; then
+        ok "Mirrorlist updated — saved mirrors:"
+        grep '^Server' /etc/pacman.d/mirrorlist | sed 's/^Server = /    /'
+    else
+        fail "reflector failed — mirrorlist unchanged"
+    fi
+else
+    skip "reflector not installed — mirrorlist unchanged"
+fi
+
+# ── Broken Symlink Scan ───────────────────────────────────────────────────────
+header "Broken Symlink Scan (~)"
+
+mapfile -t BROKEN < <(find ~ -xtype l 2>/dev/null)
+
+if [ ${#BROKEN[@]} -gt 0 ]; then
+    warn "${#BROKEN[@]} broken symlink(s) found:"
+    for link in "${BROKEN[@]}"; do
+        echo "    $link"
+        if ask "Remove $link?"; then
+            rm "$link" \
+                && ok "Removed: $link" \
+                || fail "Could not remove: $link"
+        else
+            skip "Kept: $link"
+        fi
+    done
+else
+    ok "No broken symlinks in ~/"
+fi
+
+# ── Disk Usage After ──────────────────────────────────────────────────────────
+header "Disk Usage (after)"
+df -h /
+AFTER_AVAIL=$(df / | awk 'NR==2{print $4}')
+
+FREED=$(( AFTER_AVAIL - BEFORE_AVAIL ))
+if [ "$FREED" -gt 0 ]; then
+    ok "Space freed: $(numfmt --to=iec --suffix=B $((FREED * 1024)))"
+else
+    info "No measurable space change (updates may have used space)"
+fi
+
+echo -e "\n${BOLD}${GREEN}  Maintenance complete.${NC}\n"
