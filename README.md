@@ -27,6 +27,18 @@ It skips anything already correctly linked and warns about conflicts instead of 
 
 Or create them manually:
 
+**Home directory files:**
+
+```bash
+ln -s ~/dotfiles/home/.bashrc       ~/.bashrc
+ln -s ~/dotfiles/home/.bash_profile ~/.bash_profile
+ln -s ~/dotfiles/home/.xinitrc      ~/.xinitrc
+ln -s ~/dotfiles/home/.Xresources   ~/.Xresources
+ln -s ~/dotfiles/home/.gitconfig    ~/.gitconfig
+```
+
+**`~/.config/` directories:**
+
 ```bash
 ln -s ~/dotfiles/alacritty   ~/.config/alacritty
 ln -s ~/dotfiles/kitty       ~/.config/kitty
@@ -47,17 +59,25 @@ ln -s ~/dotfiles/scripts/maintain  ~/.local/bin/maintain
 | Script | Description |
 |--------|-------------|
 | `maintain` | Full system maintenance: updates, cache cleanup, orphan removal, journal vacuum, mirror refresh, broken symlink scan |
+| `setup` | Creates all dotfile symlinks after a fresh clone |
 
 ## Structure
 
 ```
 dotfiles/
-├── alacritty/       # Terminal config
-├── kitty/           # Terminal config
-├── bspwm/           # Window manager config + autostart
-├── nvim/            # Neovim config (lazy.nvim)
-├── polybar/         # Bar config + launch script
-├── scripts/         # Shell scripts (symlinked to ~/.local/bin)
-│   └── maintain
-└── sxhkd/           # Keybindings
+├── home/                # Home directory dotfiles (~/)
+│   ├── .bashrc          # Shell aliases, PATH, EDITOR, NVM, cargo
+│   ├── .bash_profile    # Sources .bashrc on login
+│   ├── .gitconfig       # Git identity and gh credential helper
+│   ├── .xinitrc         # X session startup: Xresources, picom, dunst, bspwm
+│   └── .Xresources      # Xft.dpi for correct font scaling at 158 DPI
+├── alacritty/           # Terminal config
+├── kitty/               # Terminal config
+├── bspwm/               # Window manager config + autostart
+├── nvim/                # Neovim config (lazy.nvim)
+├── polybar/             # Bar config + launch script
+├── scripts/             # Shell scripts (symlinked to ~/.local/bin)
+│   ├── maintain
+│   └── setup
+└── sxhkd/               # Keybindings
 ```

@@ -34,6 +34,14 @@ link() {
 
 echo "Dotfiles: $DOTFILES"
 echo ""
+echo "Linking home files..."
+link "$DOTFILES/home/.bashrc"       "$HOME/.bashrc"
+link "$DOTFILES/home/.bash_profile" "$HOME/.bash_profile"
+link "$DOTFILES/home/.xinitrc"      "$HOME/.xinitrc"
+link "$DOTFILES/home/.Xresources"   "$HOME/.Xresources"
+link "$DOTFILES/home/.gitconfig"    "$HOME/.gitconfig"
+
+echo ""
 echo "Linking configs..."
 link "$DOTFILES/alacritty" "$HOME/.config/alacritty"
 link "$DOTFILES/kitty"     "$HOME/.config/kitty"
