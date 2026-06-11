@@ -20,7 +20,7 @@ super + Return
 
 # launch plain firefox
 super + b
-  firefox &
+  GDK_DPI_SCALE=0.75 firefox &
 
 # app launcher
 super + d
