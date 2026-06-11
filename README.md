@@ -17,7 +17,15 @@ Personal dotfiles and scripts for a **ThinkPad T14s** running **Arch Linux**.
 
 ### Symlinking configs
 
-Each config directory should be symlinked into the appropriate `~/.config/` location:
+Run the setup script after cloning — it creates all symlinks automatically:
+
+```bash
+~/dotfiles/scripts/setup
+```
+
+It skips anything already correctly linked and warns about conflicts instead of overwriting.
+
+Or create them manually:
 
 ```bash
 ln -s ~/dotfiles/alacritty   ~/.config/alacritty
