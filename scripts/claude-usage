@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Show Claude Code's current session and week usage-limit percentages.
+
+Runs `claude -p "/usage"` from a dedicated scratch directory and deletes the
+throwaway session transcript it creates each time, so polling this every few
+minutes doesn't pollute real project session history or pile up junk files.
+"""
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+POLL_DIR = Path("/tmp/claude-usage-poll")
+# Claude Code names a project's transcript dir after its cwd, with "/" -> "-".
+PROJECT_DIR = (
+    Path.home() / ".claude" / "projects" / ("-" + str(POLL_DIR).lstrip("/").replace("/", "-"))
+)
+
+
+def cleanup():
+    shutil.rmtree(PROJECT_DIR, ignore_errors=True)
+
+
+def main():
+    POLL_DIR.mkdir(parents=True, exist_ok=True)
+    cleanup()  # clear any leftovers from a previous run
+
+    try:
+        result = subprocess.run(
+            ["claude", "-p", "/usage"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            cwd=POLL_DIR,
+        )
+        out = result.stdout
+    except (OSError, subprocess.TimeoutExpired):
+        print("? ?")
+        return
+    finally:
+        cleanup()
+
+    session = re.search(r"Current session:\s*(\d+)%", out)
+    week = re.search(r"Current week[^:]*:\s*(\d+)%", out)
+
+    session_pct = session.group(1) if session else "?"
+    week_pct = week.group(1) if week else "?"
+
+    print(f"{session_pct} {week_pct}")
+
+
+if __name__ == "__main__":
+    main()

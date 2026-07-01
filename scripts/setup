@@ -52,7 +52,9 @@ link "$DOTFILES/nvim"      "$HOME/.config/nvim"
 
 echo ""
 echo "Linking scripts..."
-link "$DOTFILES/scripts/maintain" "$HOME/.local/bin/maintain"
+link "$DOTFILES/scripts/maintain"     "$HOME/.local/bin/maintain"
+link "$DOTFILES/scripts/claude-usage" "$HOME/.local/bin/claude-usage"
+link "$DOTFILES/scripts/agyusage"     "$HOME/.local/bin/agyusage"
 
 echo ""
 echo "Done."

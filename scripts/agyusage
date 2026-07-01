@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""
+agyusage — Antigravity real quota usage (Weekly / Five-Hour limits) for
+polybar, split by provider group: Google Gemini models vs Claude/GPT models.
+
+The Antigravity CLI's `/usage` command only exists inside the interactive
+TUI (confirmed `agy -p "/usage"` does NOT trigger it — the model just
+replies conversationally). This drives a throwaway tmux session instead:
+launches `agy`, sends "/usage", captures the rendered panel, and kills the
+session. This creates no conversation/session records, but it does append
+a "/usage" entry to Antigravity's own ~/.gemini/antigravity-cli/history.jsonl
+on every call — prune_history() removes exactly the entries this script
+just created (matched by workspace + timestamp window) afterward.
+
+Output is four bare integers (percent USED, no decimals, no % sign), no
+labels (position conveys meaning):
+  <gemini 5h-used> <gemini weekly-used> <claude/gpt 5h-used> <claude/gpt weekly-used>
+"""
+import json
+import os
+import re
+import signal
+import subprocess
+import time
+import uuid
+
+AGY_BIN = os.path.expanduser("~/.local/bin/agy")
+WORKDIR = os.path.expanduser("~/dotfiles")  # a trusted workspace, avoids a trust prompt
+SESSION = f"agyusage-poll-{uuid.uuid4().hex[:8]}"
+HISTORY_FILE = os.path.expanduser("~/.gemini/antigravity-cli/history.jsonl")
+
+READY_TIMEOUT = 15
+USAGE_TIMEOUT = 10
+POLL_INTERVAL = 0.3
+
+
+def tmux(*args):
+    return subprocess.run(["tmux", *args], capture_output=True, text=True, timeout=10)
+
+
+def capture():
+    return tmux("capture-pane", "-p", "-t", SESSION).stdout
+
+
+def wait_for(marker, timeout):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if marker in capture():
+            return True
+        time.sleep(POLL_INTERVAL)
+    return False
+
+
+def kill_pane_process_group():
+    """`tmux kill-session` alone leaves the agy process running (it keeps an
+    open fd to the dead pty and never exits) — kill its whole process group."""
+    try:
+        pane_pid_str = tmux("list-panes", "-t", SESSION, "-F", "#{pane_pid}").stdout.strip()
+        if pane_pid_str:
+            pgid = os.getpgid(int(pane_pid_str))
+            os.killpg(pgid, signal.SIGKILL)
+    except (ValueError, ProcessLookupError, PermissionError, OSError):
+        pass
+
+
+def prune_history(since_ms):
+    """Remove the "/usage" history entries this script's own run just added.
+
+    Matched by workspace == WORKDIR, type == slash_command, display ==
+    /usage, and timestamp >= since_ms — narrow enough to never touch a
+    genuine manual "/usage" you type yourself in a real session, since
+    those predate this run's start time.
+    """
+    try:
+        with open(HISTORY_FILE) as f:
+            lines = f.readlines()
+    except OSError:
+        return
+
+    kept = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            entry = json.loads(stripped)
+        except json.JSONDecodeError:
+            kept.append(line)
+            continue
+
+        is_ours = (
+            entry.get("display") == "/usage"
+            and entry.get("type") == "slash_command"
+            and entry.get("workspace") == WORKDIR
+            and entry.get("timestamp", 0) >= since_ms
+        )
+        if not is_ours:
+            kept.append(line)
+
+    if len(kept) != len(lines):
+        tmp_path = HISTORY_FILE + ".tmp"
+        with open(tmp_path, "w") as f:
+            f.writelines(kept)
+        os.replace(tmp_path, HISTORY_FILE)
+
+
+def _used_pct(remaining_str):
+    """The panel shows percent *remaining* — invert to percent used, rounded."""
+    try:
+        return str(round(100 - float(remaining_str)))
+    except ValueError:
+        return "?"
+
+
+def parse_percentages(text):
+    parts = re.split(r"CLAUDE AND GPT MODELS", text, maxsplit=1)
+    gemini_section, other_section = parts if len(parts) == 2 else (text, "")
+
+    def find_pcts(section):
+        weekly = re.search(r"Weekly Limit\s*\n\s*\[[^\]]*\]\s*([\d.]+)%", section)
+        five_hour = re.search(r"Five Hour Limit\s*\n\s*\[[^\]]*\]\s*([\d.]+)%", section)
+        weekly_used = _used_pct(weekly.group(1)) if weekly else "?"
+        five_hour_used = _used_pct(five_hour.group(1)) if five_hour else "?"
+        return five_hour_used, weekly_used  # 5h ("daily") first, then weekly
+
+    g_5h, g_week = find_pcts(gemini_section)
+    o_5h, o_week = find_pcts(other_section)
+    return g_5h, g_week, o_5h, o_week
+
+
+def main():
+    start_ms = int(time.time() * 1000)
+    try:
+        tmux(
+            "new-session", "-d", "-s", SESSION,
+            "-x", "220", "-y", "50",
+            "-c", WORKDIR,
+            AGY_BIN,
+        )
+
+        if not wait_for("for shortcuts", READY_TIMEOUT):
+            print("? ? ? ?")
+            return
+
+        tmux("send-keys", "-t", SESSION, "/usage", "Enter")
+
+        if not wait_for("GEMINI MODELS", USAGE_TIMEOUT):
+            print("? ? ? ?")
+            return
+
+        time.sleep(0.5)  # let the panel finish rendering
+        g_5h, g_week, o_5h, o_week = parse_percentages(capture())
+        print(f"{g_5h} {g_week} {o_5h} {o_week}")
+    except Exception:
+        print("? ? ? ?")
+    finally:
+        kill_pane_process_group()
+        tmux("kill-session", "-t", SESSION)
+        prune_history(start_ms)
+
+
+if __name__ == "__main__":
+    main()
