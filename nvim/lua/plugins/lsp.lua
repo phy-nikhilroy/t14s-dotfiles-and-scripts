@@ -21,6 +21,7 @@ return {
 				"pyright",
 				"bashls",
 				"lua_ls",
+				"gopls",
 			},
 		})
 
