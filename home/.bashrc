@@ -18,3 +18,7 @@ export VISUAL=nvim
 alias vim=nvim
 alias vi=nvim
 . "$HOME/.cargo/env"
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/nikhil/.local/bin:$PATH"
