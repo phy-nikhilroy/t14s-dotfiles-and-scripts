@@ -10,6 +10,13 @@ import shutil
 import subprocess
 from pathlib import Path
 
+def pad3(s):
+    """Right-align to 3 chars (covers 0-100) with spaces so the module's
+    rendered width never changes with digit count and shifts the bar —
+    same right-aligned look as polybar's other numeric modules."""
+    return s.rjust(3)
+
+
 POLL_DIR = Path("/tmp/claude-usage-poll")
 # Claude Code names a project's transcript dir after its cwd, with "/" -> "-".
 PROJECT_DIR = (
@@ -46,7 +53,7 @@ def main():
     session_pct = session.group(1) if session else "?"
     week_pct = week.group(1) if week else "?"
 
-    print(f"{session_pct} {week_pct}")
+    print(f"{pad3(session_pct)} {pad3(week_pct)}")
 
 
 if __name__ == "__main__":

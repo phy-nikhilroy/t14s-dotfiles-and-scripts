@@ -29,6 +29,16 @@ WORKDIR = os.path.expanduser("~/dotfiles")  # a trusted workspace, avoids a trus
 SESSION = f"agyusage-poll-{uuid.uuid4().hex[:8]}"
 HISTORY_FILE = os.path.expanduser("~/.gemini/antigravity-cli/history.jsonl")
 
+# Inline polybar color tags so each provider group renders in its own color
+# within this one module's output — Gemini brand blue, and the same orange
+# used for the "claude" module (see polybar/config.ini).
+GEMINI_BLUE = "#4285F4"
+CLAUDE_ORANGE = "#D97757"
+
+
+def colorize(hexcolor, text):
+    return f"%{{F{hexcolor}}}{text}%{{F-}}"
+
 READY_TIMEOUT = 15
 USAGE_TIMEOUT = 10
 POLL_INTERVAL = 0.3
@@ -104,6 +114,13 @@ def prune_history(since_ms):
         os.replace(tmp_path, HISTORY_FILE)
 
 
+def pad3(s):
+    """Right-align to 3 chars (covers 0-100) with spaces so the module's
+    rendered width never changes with digit count and shifts the bar —
+    same right-aligned look as polybar's other numeric modules."""
+    return s.rjust(3)
+
+
 def _used_pct(remaining_str):
     """The panel shows percent *remaining* — invert to percent used, rounded."""
     try:
@@ -139,20 +156,22 @@ def main():
         )
 
         if not wait_for("for shortcuts", READY_TIMEOUT):
-            print("? ? ? ?")
+            print(f"{pad3('?')} {pad3('?')} {pad3('?')} {pad3('?')}")
             return
 
         tmux("send-keys", "-t", SESSION, "/usage", "Enter")
 
         if not wait_for("GEMINI MODELS", USAGE_TIMEOUT):
-            print("? ? ? ?")
+            print(f"{pad3('?')} {pad3('?')} {pad3('?')} {pad3('?')}")
             return
 
         time.sleep(0.5)  # let the panel finish rendering
         g_5h, g_week, o_5h, o_week = parse_percentages(capture())
-        print(f"{g_5h} {g_week} {o_5h} {o_week}")
+        gemini_part = colorize(GEMINI_BLUE, f"{pad3(g_5h)} {pad3(g_week)}")
+        claude_part = colorize(CLAUDE_ORANGE, f"{pad3(o_5h)} {pad3(o_week)}")
+        print(f"{gemini_part} {claude_part}")
     except Exception:
-        print("? ? ? ?")
+        print(f"{pad3('?')} {pad3('?')} {pad3('?')} {pad3('?')}")
     finally:
         kill_pane_process_group()
         tmux("kill-session", "-t", SESSION)
