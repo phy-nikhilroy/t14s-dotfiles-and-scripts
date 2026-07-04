@@ -15,8 +15,12 @@ super + alt + l
 # APP LAUNCHERS
 
 # launch terminal
-super + Return 
+super + Return
 	alacritty
+
+# launch kitty
+super + t
+	kitty
 
 # launch plain firefox
 super + b
