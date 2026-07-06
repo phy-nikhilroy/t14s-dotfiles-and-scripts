@@ -11,6 +11,7 @@ the rendered panel, and kills the session. It deletes the throwaway
 session transcript it creates each time, so polling this every few minutes
 doesn't pollute real project session history or pile up junk files.
 """
+import glob
 import os
 import re
 import shutil
@@ -20,9 +21,29 @@ import time
 import uuid
 from pathlib import Path
 
-CLAUDE_BIN = shutil.which("claude") or os.path.expanduser(
-    "~/.nvm/versions/node/v24.16.0/bin/claude"
-)
+
+def _find_claude_bin():
+    """shutil.which() alone can miss it here: tmux's new-session spawns
+    CLAUDE_BIN directly rather than through a login shell, so it may not see
+    the same PATH nvm sets up interactively. Fall back to globbing nvm's
+    node versions dir instead of hardcoding one version, since that goes
+    stale the moment `nvm install` moves the default."""
+    found = shutil.which("claude")
+    if found:
+        return found
+    candidates = glob.glob(os.path.expanduser("~/.nvm/versions/node/*/bin/claude"))
+    if candidates:
+        # Sort by version numerically (v9 < v24), not lexically ('9' > '2'),
+        # and take the newest installed node version.
+        def version_key(path):
+            version = Path(path).parts[-3].lstrip("v")
+            return tuple(int(part) for part in version.split("."))
+
+        return max(candidates, key=version_key)
+    return "claude"  # last resort — let it fail loudly if truly not found
+
+
+CLAUDE_BIN = _find_claude_bin()
 POLL_DIR = Path("/tmp/claude-usage-poll")
 SESSION = f"claude-usage-poll-{uuid.uuid4().hex[:8]}"
 
