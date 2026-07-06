@@ -1,0 +1,31 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = ["pyyaml"]
+# ///
+"""Rofi popup for looking up tool keybinds stored in shortcuts-data.yaml."""
+
+import os
+import subprocess
+
+import yaml
+
+DATA_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "shortcuts-data.yaml")
+
+
+def load_entries():
+    with open(DATA_FILE) as f:
+        return yaml.safe_load(f)
+
+
+def format_line(entry):
+    return f"{entry['tool']:<8} {entry['keybind']:<20} {entry['description']}"
+
+
+def main():
+    entries = load_entries()
+    lines = [format_line(e) for e in entries]
+    subprocess.run(["rofi", "-dmenu", "-i", "-p", "shortcuts"], input="\n".join(lines), text=True)
+
+
+if __name__ == "__main__":
+    main()

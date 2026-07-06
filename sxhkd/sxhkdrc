@@ -30,6 +30,10 @@ super + b
 super + d
   rofi -show drun
 
+# shortcut lookup
+super + slash
+  shortcuts
+
 # WINDOW RULES
 
 # kill window

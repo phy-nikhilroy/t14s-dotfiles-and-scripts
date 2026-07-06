@@ -1,0 +1,189 @@
+# Shortcut lookup data for the `shortcuts` rofi popup.
+# Neovim leader key is <space> (see nvim/lua/config/globals.lua) — written as
+# "space" below for readability. tmux has no config in this repo, so its
+# entries are stock tmux defaults (prefix = C-b).
+
+- tool: tmux
+  keybind: "C-b c"
+  description: New window
+- tool: tmux
+  keybind: "C-b ,"
+  description: Rename current window
+- tool: tmux
+  keybind: "C-b &"
+  description: Kill current window
+- tool: tmux
+  keybind: "C-b n"
+  description: Next window
+- tool: tmux
+  keybind: "C-b p"
+  description: Previous window
+- tool: tmux
+  keybind: "C-b 0-9"
+  description: Select window by number
+- tool: tmux
+  keybind: "C-b w"
+  description: List windows and choose one
+- tool: tmux
+  keybind: 'C-b %'
+  description: Split pane vertically (left/right)
+- tool: tmux
+  keybind: 'C-b "'
+  description: Split pane horizontally (top/bottom)
+- tool: tmux
+  keybind: "C-b arrow"
+  description: Move between panes
+- tool: tmux
+  keybind: "C-b o"
+  description: Cycle to next pane
+- tool: tmux
+  keybind: "C-b q"
+  description: Show pane numbers
+- tool: tmux
+  keybind: "C-b x"
+  description: Kill current pane
+- tool: tmux
+  keybind: "C-b z"
+  description: Toggle pane zoom
+- tool: tmux
+  keybind: "C-b {"
+  description: Move pane left
+- tool: tmux
+  keybind: "C-b }"
+  description: Move pane right
+- tool: tmux
+  keybind: "C-b space"
+  description: Cycle pane layouts
+- tool: tmux
+  keybind: "C-b d"
+  description: Detach from session
+- tool: tmux
+  keybind: "C-b s"
+  description: List sessions and choose one
+- tool: tmux
+  keybind: "C-b $"
+  description: Rename session
+- tool: tmux
+  keybind: "C-b ["
+  description: Enter copy mode
+- tool: tmux
+  keybind: "C-b ]"
+  description: Paste buffer
+- tool: tmux
+  keybind: "C-b ?"
+  description: List all tmux keybinds
+
+- tool: neovim
+  keybind: "space c"
+  description: Clear search highlights
+- tool: neovim
+  keybind: "Esc"
+  description: Clear search highlights
+- tool: neovim
+  keybind: "n"
+  description: Next search result (centered)
+- tool: neovim
+  keybind: "N"
+  description: Previous search result (centered)
+- tool: neovim
+  keybind: "C-d"
+  description: Half page down (centered)
+- tool: neovim
+  keybind: "C-u"
+  description: Half page up (centered)
+- tool: neovim
+  keybind: "space p (visual)"
+  description: Paste without yanking
+- tool: neovim
+  keybind: "space x"
+  description: Delete without yanking
+- tool: neovim
+  keybind: "C-h"
+  description: Move to left window
+- tool: neovim
+  keybind: "C-j"
+  description: Move to bottom window
+- tool: neovim
+  keybind: "C-k"
+  description: Move to top window
+- tool: neovim
+  keybind: "C-l"
+  description: Move to right window
+- tool: neovim
+  keybind: "space sv"
+  description: Split window vertically
+- tool: neovim
+  keybind: "space sh"
+  description: Split window horizontally
+- tool: neovim
+  keybind: "C-Up"
+  description: Increase window height
+- tool: neovim
+  keybind: "C-Down"
+  description: Decrease window height
+- tool: neovim
+  keybind: "C-Left"
+  description: Decrease window width
+- tool: neovim
+  keybind: "C-Right"
+  description: Increase window width
+- tool: neovim
+  keybind: "A-j"
+  description: Move line/selection down
+- tool: neovim
+  keybind: "A-k"
+  description: Move line/selection up
+- tool: neovim
+  keybind: "space ff"
+  description: "FZF: find files"
+- tool: neovim
+  keybind: "space fg"
+  description: "FZF: live grep"
+- tool: neovim
+  keybind: "space fb"
+  description: "FZF: buffers"
+- tool: neovim
+  keybind: "space fd"
+  description: "FZF: workspace diagnostics"
+- tool: neovim
+  keybind: "space fs"
+  description: "FZF: document symbols"
+- tool: neovim
+  keybind: "space e"
+  description: Toggle file explorer (nvim-tree)
+- tool: neovim
+  keybind: "space t"
+  description: Toggle floating terminal
+- tool: neovim
+  keybind: "space fm"
+  description: Format file or range (conform)
+- tool: neovim
+  keybind: "space ag"
+  description: Toggle Gemini AI
+- tool: neovim
+  keybind: "space aa"
+  description: Ask Gemini (normal/visual)
+- tool: neovim
+  keybind: "gd"
+  description: "LSP: go to definition"
+- tool: neovim
+  keybind: "gr"
+  description: "LSP: go to references"
+- tool: neovim
+  keybind: "K"
+  description: "LSP: hover documentation"
+- tool: neovim
+  keybind: "space rn"
+  description: "LSP: rename variable"
+- tool: neovim
+  keybind: "space ca"
+  description: "LSP: code action"
+- tool: neovim
+  keybind: "[d"
+  description: "LSP: previous diagnostic"
+- tool: neovim
+  keybind: "]d"
+  description: "LSP: next diagnostic"
+- tool: neovim
+  keybind: "space df"
+  description: "LSP: show diagnostic float"
