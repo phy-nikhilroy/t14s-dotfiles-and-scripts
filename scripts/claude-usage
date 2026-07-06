@@ -1,14 +1,81 @@
 #!/usr/bin/env python3
 """Show Claude Code's current session and week usage-limit percentages.
 
-Runs `claude -p "/usage"` from a dedicated scratch directory and deletes the
-throwaway session transcript it creates each time, so polling this every few
-minutes doesn't pollute real project session history or pile up junk files.
+`claude -p "/usage"` (headless mode) hits the same /api/oauth/usage backend
+but often gets back a fieldless "in-band error envelope" body instead of
+real data — the CLI then just omits the percentage lines with no error.
+The interactive TUI hitting the same endpoint is far more reliable in
+practice, so — like agyusage does for Antigravity — this drives a
+throwaway tmux session instead: launches `claude`, sends "/usage", captures
+the rendered panel, and kills the session. It deletes the throwaway
+session transcript it creates each time, so polling this every few minutes
+doesn't pollute real project session history or pile up junk files.
 """
+import os
 import re
 import shutil
+import signal
 import subprocess
+import time
+import uuid
 from pathlib import Path
+
+CLAUDE_BIN = shutil.which("claude") or os.path.expanduser(
+    "~/.nvm/versions/node/v24.16.0/bin/claude"
+)
+POLL_DIR = Path("/tmp/claude-usage-poll")
+SESSION = f"claude-usage-poll-{uuid.uuid4().hex[:8]}"
+
+# Claude Code names a project's transcript dir after its cwd, with "/" -> "-".
+PROJECT_DIR = (
+    Path.home() / ".claude" / "projects" / ("-" + str(POLL_DIR).lstrip("/").replace("/", "-"))
+)
+
+READY_TIMEOUT = 15
+USAGE_TIMEOUT = 25
+POLL_INTERVAL = 0.3
+
+
+def tmux(*args):
+    return subprocess.run(["tmux", *args], capture_output=True, text=True, timeout=10)
+
+
+def capture():
+    return tmux("capture-pane", "-p", "-t", SESSION).stdout
+
+
+def wait_for_any(markers, timeout):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        text = capture()
+        for marker in markers:
+            if marker in text:
+                return marker
+        time.sleep(POLL_INTERVAL)
+    return None
+
+
+def kill_pane_process_group():
+    """Belt-and-suspenders, copied from agyusage's reasoning for the agy
+    binary — but tested directly against claude and it turned out
+    unnecessary here: `tmux kill-session` alone already reaps the claude
+    process (and everything under it) within about a second, with nothing
+    left in /proc. Likely because CLAUDE_BIN is launched as the pane's
+    direct command rather than wrapped in a shell, so the pane's foreground
+    process is claude itself, not an intermediary that could leave it
+    orphaned. Kept anyway as harmless defense-in-depth."""
+    try:
+        pane_pid_str = tmux("list-panes", "-t", SESSION, "-F", "#{pane_pid}").stdout.strip()
+        if pane_pid_str:
+            pgid = os.getpgid(int(pane_pid_str))
+            os.killpg(pgid, signal.SIGKILL)
+    except (ValueError, ProcessLookupError, PermissionError, OSError):
+        pass
+
+
+def cleanup():
+    shutil.rmtree(PROJECT_DIR, ignore_errors=True)
+
 
 def pad3(s):
     """Right-align to 3 chars (covers 0-100) with spaces so the module's
@@ -17,15 +84,12 @@ def pad3(s):
     return s.rjust(3)
 
 
-POLL_DIR = Path("/tmp/claude-usage-poll")
-# Claude Code names a project's transcript dir after its cwd, with "/" -> "-".
-PROJECT_DIR = (
-    Path.home() / ".claude" / "projects" / ("-" + str(POLL_DIR).lstrip("/").replace("/", "-"))
-)
-
-
-def cleanup():
-    shutil.rmtree(PROJECT_DIR, ignore_errors=True)
+def parse_percentages(text):
+    session = re.search(r"Current session.*?(\d+)% used", text, re.S)
+    week = re.search(r"Current week \(all models\).*?(\d+)% used", text, re.S)
+    session_pct = session.group(1) if session else "?"
+    week_pct = week.group(1) if week else "?"
+    return session_pct, week_pct
 
 
 def main():
@@ -33,27 +97,51 @@ def main():
     cleanup()  # clear any leftovers from a previous run
 
     try:
-        result = subprocess.run(
-            ["claude", "-p", "/usage"],
-            capture_output=True,
-            text=True,
-            timeout=20,
-            cwd=POLL_DIR,
+        tmux(
+            "new-session", "-d", "-s", SESSION,
+            "-x", "220", "-y", "50",
+            "-c", str(POLL_DIR),
+            CLAUDE_BIN,
         )
-        out = result.stdout
-    except (OSError, subprocess.TimeoutExpired):
-        print("? ?")
-        return
+
+        # First-ever run against POLL_DIR shows a one-time trust prompt;
+        # the trust decision then persists in ~/.claude.json regardless of
+        # the transcript cleanup() does, so this only fires once ever.
+        marker = wait_for_any(["trust this folder", "for shortcuts"], READY_TIMEOUT)
+        if marker is None:
+            print(f"{pad3('?')} {pad3('?')}")
+            return
+        if marker == "trust this folder":
+            tmux("send-keys", "-t", SESSION, "Enter")
+            if wait_for_any(["for shortcuts"], READY_TIMEOUT) is None:
+                print(f"{pad3('?')} {pad3('?')}")
+                return
+
+        tmux("send-keys", "-t", SESSION, "/usage", "Enter")
+
+        # The usage endpoint occasionally answers with an in-panel "rate
+        # limited" error instead of data; the UI's own recovery is "r to
+        # retry", so do that a couple of times before giving up.
+        for attempt in range(3):
+            marker = wait_for_any(["Current session", "Current week", "rate limited"], USAGE_TIMEOUT)
+            if marker in ("Current session", "Current week"):
+                break
+            if marker == "rate limited" and attempt < 2:
+                time.sleep(3)  # give the backend a moment before "r to retry"
+                tmux("send-keys", "-t", SESSION, "r")
+                continue
+            print(f"{pad3('?')} {pad3('?')}")
+            return
+
+        time.sleep(0.5)  # let the panel finish rendering
+        session_pct, week_pct = parse_percentages(capture())
+        print(f"{pad3(session_pct)} {pad3(week_pct)}")
+    except Exception:
+        print(f"{pad3('?')} {pad3('?')}")
     finally:
+        kill_pane_process_group()
+        tmux("kill-session", "-t", SESSION)
         cleanup()
-
-    session = re.search(r"Current session:\s*(\d+)%", out)
-    week = re.search(r"Current week[^:]*:\s*(\d+)%", out)
-
-    session_pct = session.group(1) if session else "?"
-    week_pct = week.group(1) if week else "?"
-
-    print(f"{pad3(session_pct)} {pad3(week_pct)}")
 
 
 if __name__ == "__main__":
