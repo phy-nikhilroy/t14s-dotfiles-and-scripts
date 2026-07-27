@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Bluetooth status for polybar: OFF when powered down, otherwise the
+# connected device name(s) or "ON" when powered but nothing is connected.
+set -euo pipefail
+
+if ! bluetoothctl show | grep -q "Powered: yes"; then
+    echo "OFF"
+    exit 0
+fi
+
+devices=$(bluetoothctl devices Connected | cut -d' ' -f3- | paste -sd, -)
+
+if [ -z "$devices" ]; then
+    echo "ON"
+else
+    echo "$devices"
+fi
