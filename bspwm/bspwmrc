@@ -14,6 +14,11 @@ bspc config borderless_monocle true
 bspc config gapless_monocle true
 
 pgrep -x flameshot >/dev/null || flameshot &
+# no idle auto-lock: disable the X screensaver so xss-lock never fires on inactivity.
+# xss-lock still locks on lid close / suspend via logind.
+xset s off
+xset s noblank
+pgrep -x xss-lock >/dev/null || xss-lock -- i3lock -c 000000 &
 
 ~/.config/polybar/launch.sh &
 
