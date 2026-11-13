@@ -22,3 +22,6 @@ alias vi=nvim
 
 # Added by Antigravity CLI installer
 export PATH="/home/nikhil/.local/bin:$PATH"
+
+# opencode
+export PATH=/home/nikhil/.opencode/bin:$PATH
