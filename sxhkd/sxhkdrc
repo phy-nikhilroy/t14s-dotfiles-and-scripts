@@ -95,6 +95,16 @@ super + alt + {Left,Down,Up,Right}
 		      top 0 -20 || bspc node -z bottom 0 -20, \
 		      right 20 0 || bspc node -z left 20 0}
 
+# WALLPAPER
+
+# next wallpaper in ~/wallpapers
+super + w
+	wallpaper-cycle next
+
+# previous wallpaper in ~/wallpapers
+super + shift + w
+	wallpaper-cycle prev
+
 # VOLUME AND BRIGHTNESS SETTINGS
 
 # raise volume

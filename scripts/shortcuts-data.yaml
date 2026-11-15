@@ -187,3 +187,9 @@
 - tool: neovim
   keybind: "space df"
   description: "LSP: show diagnostic float"
+- tool: bspwm
+  keybind: "super + w"
+  description: "Next wallpaper (from ~/wallpapers)"
+- tool: bspwm
+  keybind: "super + shift + w"
+  description: "Previous wallpaper (from ~/wallpapers)"

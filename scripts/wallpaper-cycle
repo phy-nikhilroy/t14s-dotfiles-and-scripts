@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Cycle the desktop wallpaper through the images in ~/wallpapers.
+# Usage: wallpaper-cycle [next|prev]   (default: next)
+# Rewrites ~/.fehbg (sourced by bspwmrc at login) and applies it with feh.
+set -euo pipefail
+
+dir="$HOME/wallpapers"
+fehbg="$HOME/.fehbg"
+direction="${1:-next}"
+
+mapfile -d '' -t files < <(
+  find "$dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -print0 | sort -z
+)
+n=${#files[@]}
+if (( n == 0 )); then
+  echo "wallpaper-cycle: no images in $dir" >&2
+  exit 1
+fi
+
+# Find the currently applied wallpaper from the path in ~/.fehbg.
+current=""
+if [[ -f "$fehbg" ]]; then
+  current=$(sed -n "s/.*--bg-[a-z]* '\(.*\)' *$/\1/p" "$fehbg" | head -n1)
+fi
+
+idx=-1
+for i in "${!files[@]}"; do
+  if [[ "${files[$i]}" == "$current" ]]; then
+    idx=$i
+    break
+  fi
+done
+
+if (( idx < 0 )); then
+  # Not found (first run, or the file was moved): start from the ends.
+  [[ $direction == prev ]] && next=$(( n - 1 )) || next=0
+elif [[ $direction == prev ]]; then
+  next=$(( (idx - 1 + n) % n ))
+else
+  next=$(( (idx + 1) % n ))
+fi
+
+path="${files[$next]}"
+# Escape single quotes so the path stays valid inside the shell-quoted feh line.
+quoted=${path//\'/\'\\\'\'}
+printf '#!/bin/sh\nfeh --no-fehbg --bg-scale '\''%s'\'' \n' "$quoted" > "$fehbg"
+"$fehbg"
