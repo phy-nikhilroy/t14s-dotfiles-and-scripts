@@ -31,4 +31,7 @@ pgrep -x xss-lock >/dev/null || xss-lock -- i3lock -c 000000 &
 
 ~/.config/polybar/launch.sh &
 
+# image viewer (feh) opens floating, centered, ~70% of a 2560x1440 monitor
+bspc rule -a feh state=floating center=true rectangle=1792x1008+0+0
+
 [ -f ~/.fehbg ] && ~/.fehbg &
