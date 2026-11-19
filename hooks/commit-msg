@@ -5,7 +5,9 @@ COMMIT_MSG_FILE="$1"
 COMMIT_MSG="$(cat "$COMMIT_MSG_FILE")"
 
 # 1. Enforce No AI co-authorship / attribution
-if grep -qiE "co-authored-by:|assistant|gemini|claude|chatgpt" "$COMMIT_MSG_FILE"; then
+# Strip legitimate repository file references before checking to avoid false positives
+SANITIZED_MSG="$(sed -E 's/(CLAUDE\.md|claude-usage)//gi' "$COMMIT_MSG_FILE")"
+if echo "$SANITIZED_MSG" | grep -qiE "co-authored-by:|assistant|gemini|claude|chatgpt"; then
     echo "[ERROR] Commit rejected: AI co-authorship or assistant attribution detected in commit message."
     exit 1
 fi
