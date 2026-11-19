@@ -17,6 +17,8 @@ export EDITOR=nvim
 export VISUAL=nvim
 alias vim=nvim
 alias vi=nvim
+alias setclip='xclip -selection clipboard'
+alias getclip='xclip -selection clipboard -o'
 . "$HOME/.cargo/env"
 
 
