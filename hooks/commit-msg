@@ -1,37 +1,42 @@
 #!/usr/bin/env bash
+# Rejects commit messages that carry AI attribution, emojis, or day/week labels.
+# Ordinary words are allowed ("link the gemini profile", "claude-usage script");
+# what is rejected is attribution: trailers, "generated with" footers, vendor addresses.
 set -euo pipefail
 
-COMMIT_MSG_FILE="$1"
-COMMIT_MSG="$(cat "$COMMIT_MSG_FILE")"
+MSG_FILE="$1"
+# Git's own comment lines (verbose diff, help text) are not part of the message.
+BODY="$(grep -v '^#' "$MSG_FILE" || true)"
+AI_NAMES='claude|anthropic|gemini|antigravity|copilot|chatgpt|openai|codex|cursor|ai assistant'
 
-# 1. Enforce No AI co-authorship / attribution
-# Strip legitimate repository file references before checking to avoid false positives
-SANITIZED_MSG="$(sed -E 's/(CLAUDE\.md|claude-usage)//gi' "$COMMIT_MSG_FILE")"
-if echo "$SANITIZED_MSG" | grep -qiE "co-authored-by:|assistant|gemini|claude|chatgpt"; then
-    echo "[ERROR] Commit rejected: AI co-authorship or assistant attribution detected in commit message."
-    exit 1
+reject() { echo "[ERROR] Commit rejected: $1"; exit 1; }
+
+# 1. AI attribution.
+#    a) Any Co-authored-by trailer (this repository has a single author).
+if printf '%s\n' "$BODY" | grep -qiE '^[[:space:]]*co-authored-by:'; then
+    reject "Co-authored-by trailer found. Commits are authored solely by the maintainer."
+fi
+#    b) Attribution trailers that name an AI tool (Assisted-by: Gemini, Signed-off-by: Claude ...).
+if printf '%s\n' "$BODY" | grep -qiE "^[[:space:]]*(signed-off-by|assisted-by|generated-by|reviewed-by|helped-by|ai[a-z-]*):.*\b($AI_NAMES)\b"; then
+    reject "AI attribution trailer found."
+fi
+#    c) Footers such as "Generated with Claude Code" or "Created by Copilot".
+if printf '%s\n' "$BODY" | grep -qiE "\b(generated|created|written|authored|made)[[:space:]]+(with|by|using)[[:space:]]+\[?($AI_NAMES)"; then
+    reject "AI-generated footer found."
+fi
+#    d) Vendor bot addresses.
+if printf '%s\n' "$BODY" | grep -qiE 'noreply@anthropic\.com|copilot@github\.com|@openai\.com'; then
+    reject "AI vendor address found."
 fi
 
-# 2. Enforce No Emojis in commit message (checks for multibyte unicode emoji range patterns)
-if python3 -c '
-import sys, re
-with open(sys.argv[1]) as f:
-    text = f.read()
-# Pattern matching unicode emoji / pictograph ranges
-emoji_pattern = re.compile(r"[\U00010000-\U0010ffff]", flags=re.UNICODE)
-if emoji_pattern.search(text):
-    sys.exit(1)
-' "$COMMIT_MSG_FILE" 2>/dev/null; then
-    :
-else
-    echo "[ERROR] Commit rejected: Emojis are strictly forbidden in commit messages."
-    exit 1
+# 2. Emojis and pictographs (supplementary planes, symbol blocks, variation selector, ZWJ).
+if printf '%s\n' "$BODY" | LC_ALL=C.UTF-8 grep -qP '[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}\x{1F1E6}-\x{1F1FF}\x{FE0F}\x{200D}]'; then
+    reject "emojis and pictographs are not allowed in commit messages."
 fi
 
-# 3. Enforce no chronological labels (day numbers, week numbers)
-if grep -qiE "\b(day|week)[ -]?[0-9]+\b" "$COMMIT_MSG_FILE"; then
-    echo "[ERROR] Commit rejected: day/week numbers are not allowed in commit messages. Describe functional progress instead."
-    exit 1
+# 3. Chronological labels.
+if printf '%s\n' "$BODY" | grep -qiE '\b(day|week)[ -]?[0-9]+\b'; then
+    reject "day/week numbers are not allowed in commit messages. Describe functional progress instead."
 fi
 
 exit 0
