@@ -1,4 +1,4 @@
-# Review Documents: Instructions for Claude
+# Review Documents: Instructions for AI Agents
 
 A review document is the permanent record of a stretch of work: what was done, why, what went wrong,
 how it was fixed, and what was decided. Its reader is someone who arrives later (the user, a future
@@ -26,13 +26,14 @@ assembly, not archaeology.
 
 ## 2. Where it goes and what it is called
 
-- Follow the project's convention if it has one (check `AGENTS.md` or `CLAUDE.md`, and existing
-  review files). In `tindal-data-pipeline`, release reviews are `v2_journey_<version>.md` at the
-  workspace root, untracked; other stretches of work go beside them as
-  `review_<YYYY-MM-DD>_<short-topic>.md`.
-- With no convention: a `reviews/` directory at the project root, files named
-  `<YYYY-MM-DD>_<short-topic>.md`. Ask once whether it should be tracked in git; never commit it
-  without asking if the project keeps planning documents untracked.
+- **Always in a hidden `.review-logs/` directory (leading period) at the project root** (the
+  directory that holds the git repository), in every project. Create it if it does not exist. The
+  folder holds reviews, running notes, and the log files they cite. Where the git repository is a
+  subdirectory of the workspace, put `.review-logs/` at the workspace root, outside the repository.
+- **Always untracked in git.** Before writing the first file, make sure `.review-logs/` is listed in the
+  project's `.gitignore`; add it if not. Never stage or commit anything under `.review-logs/`. If
+  `git status` shows files under `.review-logs/`, fix the ignore rule before doing anything else.
+- Name files `<YYYY-MM-DD>_<short-topic>.md`. For a release, use `<YYYY-MM-DD>_release-<version>.md`.
 - **One file per release or per stretch of work.** Never combine two releases in one file.
 - Link related reviews to each other by file name and section number.
 
@@ -40,18 +41,18 @@ assembly, not archaeology.
 
 From the first action of any stretch of work longer than a few steps:
 
-1. **Open a running notes file** (in this project, `v2_work/logs/<topic>-notes.md`; elsewhere,
-   `reviews/<YYYY-MM-DD>_<topic>-notes.md`). Write to it at each milestone, not at the end.
+1. **Open a running notes file** at `.review-logs/<YYYY-MM-DD>_<topic>-notes.md`. Write to it at each
+   milestone, not at the end.
 2. Record in it, with the local time:
    - each decision and the options rejected, with the reason;
    - each error: the exact message, the command that produced it, the root cause once found, the fix;
    - each measured number that matters, with its source file and the size it was measured on;
    - anything chosen where the spec or the user was silent;
    - user instructions that change how the work is done.
-3. **Send long outputs to log files** with predictable names (`logs/<item>-<step>.log`) and note
-   the path, so the review can cite them.
-4. Notes survive crashes and context loss. On 2026-11-19 a notes file written during a run was the
-   only record that survived a four-hour machine freeze. Treat the notes file as part of the work.
+3. **Send long outputs to log files** with predictable names (`.review-logs/logs/<item>-<step>.log`) and
+   note the path, so the review can cite them.
+4. Notes survive crashes and context loss; after a crash or freeze they may be the only record of
+   the work. Treat the notes file as part of the work.
 
 ## 4. Gathering sources before writing
 
@@ -64,7 +65,7 @@ Use, in this order of trust:
    earlier or crashed session. Condense one to a timeline first (timestamps, user messages,
    commands, result heads, errors) with a short script; never read the raw file into context.
    Transcript timestamps are UTC.
-5. **System records** when relevant: `journalctl`, file modification times, the ledger.
+5. **System records** when relevant: `journalctl`, file modification times.
 
 Never invent detail a source does not hold. When something is unknown, write that it is unknown.
 
@@ -74,8 +75,7 @@ Use these sections in this order. Omit a section only when it would be empty, an
 line rather than leaving a reader to wonder.
 
 1. **Title and purpose paragraph.** What stretch of work, from which state to which state (tags,
-   commits, dates). Where the file lives, whether it is tracked, when it was written, and the time
-   zone used.
+   commits, dates). Where the file lives, when it was written, and the time zone used.
 2. **At a glance.** A table a reader can absorb in one minute: what changed, the result, headline
    numbers, the biggest incident, user decisions, time taken, commits.
 3. **Contents** with working anchor links.

@@ -21,3 +21,6 @@ __pycache__/
 *.pyc
 *.pyo
 .cache/
+
+# review documents and work notes (kept local)
+.review-logs/
