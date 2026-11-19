@@ -13,7 +13,7 @@ This repository contains the system dotfiles and desktop configurations for an A
 - `home/`: User home files (`.bashrc`, `.bash_profile`, `.xinitrc`, `.Xresources`, `.gitconfig`).
 - `git/`: Global git configuration template (`ignore`).
 - `hooks/`: Git pre-commit and commit-msg quality enforcement hooks.
-- `ai/`: Host system profile (`system-profile.md`) symlinked globally for agent environments.
+- `ai/`: Host system profile (`system-profile.md`) symlinked globally for agent environments (`~/.claude/CLAUDE.md`, `~/.gemini/config/AGENTS.md`), and `review-docs.md`, the instructions for writing review documents, which the profile points to by path.
 - `scripts/`: System scripts symlinked into `~/.local/bin/`:
   - `maintain`: System update and package cache cleanup.
   - `claude-usage`: Usage monitoring utility.

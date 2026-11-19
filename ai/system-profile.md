@@ -48,13 +48,12 @@
 
 ## Package Management & Environment
 - **Package Manager**: Use `pacman` (`sudo pacman -S <pkg>`).
-- **Python**: Never install packages globally using `pip`; use `pacman` or create virtual environments (`python -m venv .venv`).
-- **Python tooling**: Prefer `uv` for project environments and dependencies (`uv venv`, `uv sync`, `uv run`). Never run global `python` or `pytest` inside a project; use the project's `.venv/bin/...` or `uv run`.
+- **Python**: Never install packages globally with `pip`. System-wide tools come from `pacman`; project environments are made and managed with `uv` (`uv venv`, `uv sync`, `uv pip install`, `uv run`). Never run global `python` or `pytest` inside a project; use the project's `.venv/bin/...` or `uv run`.
 - **Search scope**: Never scan `/home/nikhil/` broadly for binaries or files; locate the project's `.venv` or use `which`/`command -v`.
 - Verify syntax of shell scripts and configuration files before applying reloads.
 
 ## Git Workflow & Commit Standards
-- **Author Identity**: Author must always be `Nikhil Roy <phy.nikhilroy@gmail.com>` or `phy-nikhilroy <phy.nikhilroy@gmail.com>`.
+- **Author Identity**: Author must always be `Nikhil Roy <phy.nikhilroy@gmail.com>` or `phy-nikhilroy <phy.nikhilroy@gmail.com>`. A project's `AGENTS.md` may narrow this to one of the two (for example `tindal-data-pipeline` requires `phy-nikhilroy`); the project rule wins.
 - **No AI Attribution**: Never append AI co-author tags (`Co-authored-by: ...`), signatures, or assistant watermarks in git commit messages.
 - **Regular Commits**: Make frequent, atomic commits for discrete, well-tested units of work.
 - **Proactive Commit Reminders**: Always prompt and remind the user to consider committing whenever a logical step, refactor, or feature milestone is completed.
@@ -95,3 +94,10 @@ Before implementing any feature or task from a roadmap or spec document (e.g. `r
   6. Structure each project `AGENTS.md` with: a workspace map (which directory holds the git repo, source, tests, data, and environment), exact environment paths (interpreter, test runner, package manager), git rules specific to the project, and any spec or checkpoint protocol.
   7. Where the git repository lives in a subdirectory, state that explicitly and require git commands to run from there.
   8. Shared tooling: `~/.claude/CLAUDE.md` and `~/.gemini/config/AGENTS.md` both link to `~/dotfiles/ai/system-profile.md`; edit only that file so Claude Code and Antigravity stay identical.
+
+## Review Documents (always)
+- End every stretch of work you were asked to do (a release, feature, fix, incident, refactor, setup, or data or model run) with a review document, without being asked. Scale it to the work; never skip it because the work was small.
+- Keep a running notes file from the first step of any multi-step work: decisions with rejected options, exact errors with root causes and fixes, numbers with their source and size, and user instructions. Write it at each milestone, not at the end.
+- Before writing a review, read `~/dotfiles/ai/review-docs.md` and follow it: where reviews live and how they are named, the sources to use, the structure, the writing rules, and the checks before calling it finished.
+- Finish by telling the user the review's path and anything in it that needs their attention.
+
