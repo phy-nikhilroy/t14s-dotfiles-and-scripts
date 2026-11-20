@@ -27,3 +27,13 @@ target/
 .env.local
 *.pem
 *.key
+
+# AI coding assistant files (never tracked; a repository may force-add its own AGENTS.md)
+CLAUDE.md
+AGENTS.md
+.agents/
+.claude/
+.cursorrules
+.cursor/
+.windsurfrules
+.windsurf/

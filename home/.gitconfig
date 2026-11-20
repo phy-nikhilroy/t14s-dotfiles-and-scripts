@@ -10,4 +10,4 @@
 	helper = 
 	helper = !/usr/bin/gh auth git-credential
 [core]
-	excludesFile = /home/nikhil/.gitignore_global
+	excludesFile = ~/.config/git/ignore
