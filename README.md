@@ -100,7 +100,7 @@ Scripts in `scripts/` provide system maintenance and desktop workflow helpers:
 This repository defines unified guidelines for AI coding assistants to maintain consistency across Claude Code and Google Antigravity:
 
 - `ai/system-profile.md`: Host environment specification, hardware profile, package management constraints, dotfiles rules, and git standards. Symlinked to `~/.claude/CLAUDE.md` and `~/.gemini/config/AGENTS.md`.
-- `ai/review-docs.md`: Comprehensive guidelines and structure for writing post-work review documents.
+- `ai/review-docs.md`: Guidelines and structure for review documents, built from the first step of the work and kept in the untracked `.review-logs/`.
 - `AGENTS.md`: Repository-specific context, testing rules, and architecture notes (symlinked to `CLAUDE.md`).
 
 ## Git Quality Enforcement
@@ -118,7 +118,7 @@ Repository hooks in `hooks/` enforce code hygiene and commit quality:
   - Rejects emojis in commit messages.
   - Rejects chronological timeline labels (e.g. "Day 1", "Week 2").
 - `git/ignore`:
-  - Global git ignore template (`~/.config/git/ignore`) for editor noise, OS caches, virtual environments, and secrets.
+  - Global git ignore template (`~/.config/git/ignore`) for editor noise, OS caches, virtual environments, secrets, and AI assistant files; `home/.gitconfig` points `core.excludesFile` at it.
 
 ## Keybindings Quick Reference
 
@@ -148,7 +148,7 @@ dotfiles/
 ├── README.md            # Repository documentation
 ├── setup-symlinks.sh    # Idempotent symlink manager with automated backups
 ├── ai/
-│   ├── review-docs.md   # Guidelines for post-work review documents
+│   ├── review-docs.md   # Guidelines for review documents
 │   └── system-profile.md# Unified system profile for Claude Code and Antigravity
 ├── alacritty/           # Alacritty terminal configuration
 ├── bspwm/               # bspwm window manager configuration and autostart
