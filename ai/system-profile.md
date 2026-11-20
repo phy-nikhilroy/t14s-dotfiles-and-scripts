@@ -96,9 +96,9 @@ Before implementing any feature or task from a roadmap or spec document (e.g. `r
   8. Shared tooling: `~/.claude/CLAUDE.md` and `~/.gemini/config/AGENTS.md` both link to `~/dotfiles/ai/system-profile.md`; edit only that file so Claude Code and Antigravity stay identical.
 
 ## Review Documents (always)
-- End every stretch of work you were asked to do (a release, feature, fix, incident, refactor, setup, or data or model run) with a review document, without being asked. Scale it to the work; never skip it because the work was small.
+- Every stretch of work you were asked to do (a release, feature, fix, incident, refactor, setup, or data or model run) gets a review document, without being asked. Create it as a skeleton before the first change, update it at every milestone so a crash always leaves a valid partial review, and finish it at the end. Scale it to the work; never skip it because the work was small.
 - Reviews, running notes, and their log files always go in `.review-logs/` at the project root, which must be git untracked: add `.review-logs/` to the project's `.gitignore` before writing the first file, and never commit anything under it.
 - Keep a running notes file from the first step of any multi-step work: decisions with rejected options, exact errors with root causes and fixes, numbers with their source and size, and user instructions. Write it at each milestone, not at the end.
-- Before writing a review, read `~/dotfiles/ai/review-docs.md` and follow it: where reviews live and how they are named, the sources to use, the structure, the writing rules, and the checks before calling it finished.
+- Before starting a review, read `~/dotfiles/ai/review-docs.md` and follow it: where reviews live and how they are named, the sources to use, the structure, the writing rules, and the checks before calling it finished.
 - Finish by telling the user the review's path and anything in it that needs their attention.
 

@@ -5,24 +5,27 @@ how it was fixed, and what was decided. Its reader is someone who arrives later 
 session, another model) because something broke or something needs understanding. They must find
 the answer in the review, without reading chat histories, error logs, or diffs.
 
-Write one at the end of every stretch of work. Keep notes while working so that writing it is
-assembly, not archaeology.
+Start one at the first step of every stretch of work and keep it current as the work goes, so that
+at any moment, including after a crash, a valid review exists. Finishing it is completion, not
+archaeology.
 
 ---
 
 ## 1. When to write one
 
-- **Always** at the end of any stretch of work the user asked for: a release, a feature, a bug hunt,
-  an incident, a refactor, a setup or configuration task, a data or model run.
-- **Without being asked.** The last step of the work is the review. Mention it in the final reply,
-  with its path.
+- **Always**, for any stretch of work the user asked for: a release, a feature, a bug hunt, an
+  incident, a refactor, a setup or configuration task, a data or model run.
+- **Started at the beginning, finished at the end.** Create the review before the first change
+  (section 3) and finish it as the last step of the work.
+- **Without being asked.** Mention it in the final reply, with its path.
 - **Scale it to the work.** A one-hour fix gets a short review (summary, what happened, problems,
   decisions, state). A multi-hour release gets the full structure in section 5. Never skip one
   because the work was small; small work is where reasons get lost.
 - **Not for** pure questions, explanations, or read-only investigation, unless the investigation
   found something the project must remember (a root cause, a constraint, a gotcha). Then write it.
-- If a session ends before the work does (context limit, crash, user stops), write a partial review
-  of what exists and say it is partial.
+- If a session ends before the work does (context limit, crash, user stops), the review built so
+  far is the record: its status line says where it stopped. The next session continues that file
+  and records the interruption as an incident; it does not start a new one.
 
 ## 2. Where it goes and what it is called
 
@@ -37,22 +40,38 @@ assembly, not archaeology.
 - **One file per release or per stretch of work.** Never combine two releases in one file.
 - Link related reviews to each other by file name and section number.
 
-## 3. Document as you go (the habit)
+## 3. Build the review from the first step
 
-From the first action of any stretch of work longer than a few steps:
+The review is written while the work happens, never only at the end. A crash, a freeze, or a lost
+context must leave behind a review that a reader can use as it stands.
 
-1. **Open a running notes file** at `.review-logs/<YYYY-MM-DD>_<topic>-notes.md`. Write to it at each
-   milestone, not at the end.
-2. Record in it, with the local time:
+1. **Create the review file before the first change.** Write a skeleton: the title; a status line;
+   the purpose paragraph; the user's request, quoted; the plan as a numbered list or table; the
+   starting state and the checks that confirmed it; and the headings of the other sections that
+   apply (section 5), each marked `Pending.`
+2. **Keep a status line directly under the title:**
+   `**Status: in progress.** Last updated <date> <time>, step <n> of <m> (<what just finished>).`
+   Update it at every milestone. At the end it becomes `**Status: complete.**`
+3. **Update the review at every milestone**: an item finished, a commit made, an error resolved, a
+   decision taken, a user instruction received. Write the fact into the section it belongs to
+   (the problem table, the decision log, the item's subsection) at that moment. After each update
+   the file must read as a valid partial review: what is done, what is in progress, what is not
+   started, and what is unverified.
+4. **Before a long, heavy, or risky step** (a long run, a destructive command, a reboot, a parallel
+   job), write what is about to run, when it started, where its output goes, and how to tell
+   whether it finished. A crash during that step is then diagnosable from the review alone.
+5. **For work longer than a few steps, also keep a running notes file** at
+   `.review-logs/<YYYY-MM-DD>_<topic>-notes.md` for raw, timestamped detail too bulky for the
+   review. Record in it, with the local time:
    - each decision and the options rejected, with the reason;
    - each error: the exact message, the command that produced it, the root cause once found, the fix;
    - each measured number that matters, with its source file and the size it was measured on;
    - anything chosen where the spec or the user was silent;
    - user instructions that change how the work is done.
-3. **Send long outputs to log files** with predictable names (`.review-logs/logs/<item>-<step>.log`) and
+6. **Send long outputs to log files** with predictable names (`.review-logs/logs/<item>-<step>.log`) and
    note the path, so the review can cite them.
-4. Notes survive crashes and context loss; after a crash or freeze they may be the only record of
-   the work. Treat the notes file as part of the work.
+7. The review and the notes survive crashes and context loss; after a crash or freeze they may be
+   the only record of the work. Treat keeping them current as part of the work, not as overhead.
 
 ## 4. Gathering sources before writing
 
@@ -75,7 +94,8 @@ Use these sections in this order. Omit a section only when it would be empty, an
 line rather than leaving a reader to wonder.
 
 1. **Title and purpose paragraph.** What stretch of work, from which state to which state (tags,
-   commits, dates). Where the file lives, when it was written, and the time zone used.
+   commits, dates). Where the file lives, when it was written, the time zone used, and the status
+   line (section 3).
 2. **At a glance.** A table a reader can absorb in one minute: what changed, the result, headline
    numbers, the biggest incident, user decisions, time taken, commits.
 3. **Contents** with working anchor links.
@@ -138,7 +158,9 @@ For a short review, keep sections 1, 2, 5, 9 (or a single "What happened"), 11, 
    details beyond what the project already records.
 5. **Update the companions:** the project's execution log or changelog, the open-items list, the
    TODO list, and earlier reviews whose open items this work closed (with a dated addendum).
-6. **Tell the user:** one paragraph on what the review covers, its path, and anything it found that
+6. **Set the status line** to `**Status: complete.**` with the finishing date and time. A review
+   still marked in progress after the work has ended is not finished.
+7. **Tell the user:** one paragraph on what the review covers, its path, and anything it found that
    needs their attention.
 
 ## 8. Changing earlier reviews
